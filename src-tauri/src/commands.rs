@@ -1,6 +1,6 @@
 use tauri::State;
 
-use crate::notes::{Note, NotesRepository}; 
+use crate::notes::{Note, NotesRepository};
 use crate::vault::Vault;
 use crate::vault::notes_repo::SqliteNotesRepository;
 
@@ -35,4 +35,14 @@ pub fn update_note(vault: State<Vault>, note: Note) -> Result<(), String> {
 
     let repo = SqliteNotesRepository::new(&conn);
     repo.update_note(note)
+}
+
+#[tauri::command]
+pub fn backup_vault(vault: State<Vault>, backup_path: String) -> Result<(), String> {
+    vault.backup(backup_path)
+}
+
+#[tauri::command]
+pub fn restore_vault(vault: State<Vault>, backup_path: String) -> Result<(), String> {
+    vault.restore(backup_path)
 }

@@ -5,5 +5,6 @@ pub mod notes_repo;
 pub mod crypto;
 pub mod key;
 pub mod encrypted_db;
+pub mod backup;
 
 pub use vault::Vault;

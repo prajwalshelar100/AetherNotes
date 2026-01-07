@@ -1,4 +1,3 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod commands;
 
 use tauri::Manager;
@@ -24,6 +23,13 @@ pub fn run() {
             app.manage(vault);
 
             Ok(())
+        })
+        .on_window_event(|app, event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                if let Some(vault) = app.try_state::<vault::Vault>() {
+                    let _ = vault.seal();
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             greet,

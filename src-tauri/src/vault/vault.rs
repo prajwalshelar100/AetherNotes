@@ -1,9 +1,10 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use rusqlite::Connection;
 
+use super::backup::{create_backup, restore_backup};
 use super::crypto::KEY_SIZE;
 use super::db::open_db;
 use super::encrypted_db::{decrypt_db, encrypt_db};
@@ -25,7 +26,7 @@ impl Vault {
 
         let key = load_or_create_key(&paths.root_dir.join("key.bin"))?;
 
-        // 🔓 decrypt db → temp
+        // 🔓 decrypt encrypted DB → temp
         decrypt_db(&key, &paths.enc_db_path, &paths.tmp_db_path)?;
 
         let conn = open_db(&paths.tmp_db_path)?;
@@ -52,18 +53,45 @@ impl Vault {
             paths,
         })
     }
-}
 
-impl Drop for Vault {
-    fn drop(&mut self) {
+    /// Flush SQLite + encrypt temp DB
+    pub fn seal(&self) -> Result<(), String> {
         if let Ok(conn) = self.conn.lock() {
             let _ = conn.execute_batch("PRAGMA wal_checkpoint(FULL);");
         }
 
-        let _ = encrypt_db(
+        encrypt_db(
             &self.key,
             &self.paths.tmp_db_path,
             &self.paths.enc_db_path,
-        );
+        )
+    }
+
+    /// Create an encrypted backup file
+    pub fn backup<P: AsRef<Path>>(&self, backup_path: P) -> Result<(), String> {
+        // Ensure latest state is encrypted
+        self.seal()?;
+
+        create_backup(
+            &self.key,
+            &self.paths.enc_db_path,
+            backup_path.as_ref(),
+        )
+    }
+
+    /// Restore from an encrypted backup file
+    /// NOTE: App should be restarted after restore
+    pub fn restore<P: AsRef<Path>>(&self, backup_path: P) -> Result<(), String> {
+        restore_backup(
+            &self.key,
+            backup_path.as_ref(),
+            &self.paths.enc_db_path,
+        )
+    }
+}
+
+impl Drop for Vault {
+    fn drop(&mut self) {
+        let _ = self.seal();
     }
 }
