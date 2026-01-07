@@ -1,1 +1,0 @@
-/home/prajwalshelar/Workspace/notes/obsidian-vault/Projects/AetherNotes_V1_Full_Spec.md
