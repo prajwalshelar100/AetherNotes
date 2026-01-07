@@ -1,3 +1,4 @@
+use rusqlite::params;
 use serde_json;
 
 use crate::notes::{Note, NotesRepository};
@@ -66,11 +67,64 @@ impl<'a> NotesRepository for SqliteNotesRepository<'a> {
         Ok(notes)
     }
 
-    fn create_note(&self, _note: Note) -> Result<(), String> {
-        Err("create_note not implemented yet".into())
+     fn create_note(&self, note: Note) -> Result<(), String> {
+        let links_json =
+            serde_json::to_string(&note.links).map_err(|e| e.to_string())?;
+
+        self.conn
+            .execute(
+                r#"
+                INSERT INTO notes (
+                    id, title, content, note_type, links, status, created_at, updated_at
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+                "#,
+                params![
+                    note.id,
+                    note.title,
+                    note.content,
+                    note.note_type,
+                    links_json,
+                    note.status.as_str(),
+                    note.created_at,
+                    note.updated_at
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+
+        Ok(())
     }
 
-    fn update_note(&self, _note: Note) -> Result<(), String> {
-        Err("update_note not implemented yet".into())
+
+       fn update_note(&self, note: Note) -> Result<(), String> {
+        let links_json =
+            serde_json::to_string(&note.links).map_err(|e| e.to_string())?;
+
+        self.conn
+            .execute(
+                r#"
+                UPDATE notes
+                SET
+                    title = ?2,
+                    content = ?3,
+                    note_type = ?4,
+                    links = ?5,
+                    status = ?6,
+                    updated_at = ?7
+                WHERE id = ?1
+                "#,
+                params![
+                    note.id,
+                    note.title,
+                    note.content,
+                    note.note_type,
+                    links_json,
+                    note.status.as_str(),
+                    note.updated_at
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+
+        Ok(())
     }
+
 }

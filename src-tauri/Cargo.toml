@@ -25,3 +25,5 @@ serde_json = "1"
 uuid = { version = "1", features = ["v4"] }
 rusqlite = { version = "0.31", features = ["bundled"] }
 
+aes-gcm = "0.10"
+rand = "0.8"

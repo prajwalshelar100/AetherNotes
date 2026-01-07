@@ -28,7 +28,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             commands::list_notes,
-            commands::create_note
+            commands::create_note,
+            commands::update_note
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

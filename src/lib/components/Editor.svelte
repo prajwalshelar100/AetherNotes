@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { activeNote, allNotes } from "$lib/store";
-  import { saveNote } from "$lib/api";
+  import { activeNote, persistNote, allNotes } from "$lib/store";
   import { onDestroy } from "svelte";
   import HandwritingLayer from "./HandwritingLayer.svelte";
 
@@ -9,6 +8,7 @@
   function update(field: "title" | "content", value: string) {
     if (!$activeNote) return;
 
+    // Update local store immediately (optimistic UI)
     allNotes.update((notes) => {
       const idx = notes.findIndex((n) => n.id === $activeNote!.id);
       if (idx > -1) {
@@ -18,10 +18,12 @@
           updated_at: Date.now()
         };
 
+        // Debounced persistence
         clearTimeout(saveTimer);
+        const noteToSave = notes[idx];
         saveTimer = setTimeout(() => {
-          saveNote(notes[idx]);
-        }, 1000);
+          persistNote(noteToSave);
+        }, 800);
       }
       return notes;
     });

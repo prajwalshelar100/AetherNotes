@@ -6,7 +6,6 @@
     selectedNoteId,
     createEmptyNote
   } from "$lib/store";
-  import { saveNote } from "$lib/api";
   import NoteList from "$lib/components/NoteList.svelte";
 
   // Sidebar Modes
@@ -43,25 +42,24 @@
     isSidebarOpen.update(v => !v);
   }
 
-  // Create note based on current context
-  function create() {
-    const newNote = createEmptyNote();
+  // ✅ Create + persist note correctly
+  async function create() {
+    const note = await createEmptyNote();
 
-    if (currentPath.startsWith("/notes")) {
-      newNote.status = "inbox";
-    } else if (currentPath.startsWith("/daily")) {
-      newNote.title = new Date().toDateString();
-      newNote.status = "active";
+    // Context-specific defaults
+    if (currentPath.startsWith("/daily")) {
+      note.title = new Date().toDateString();
+      note.status = "active";
     } else if (currentPath.startsWith("/projects")) {
-      newNote.title = "Project: ";
-      newNote.status = "active";
+      note.title = "Project: ";
+      note.status = "active";
     } else if (currentPath.startsWith("/ideas")) {
-      newNote.status = "active";
+      note.status = "active";
+    } else {
+      note.status = "inbox";
     }
 
-    allNotes.update(n => [newNote, ...n]);
-    selectedNoteId.set(newNote.id);
-    saveNote(newNote);
+    // Local store already updated in createEmptyNote
   }
 
   // Filter logic per context
