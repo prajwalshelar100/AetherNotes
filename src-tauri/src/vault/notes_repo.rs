@@ -67,7 +67,7 @@ impl<'a> NotesRepository for SqliteNotesRepository<'a> {
         Ok(notes)
     }
 
-     fn create_note(&self, note: Note) -> Result<(), String> {
+    fn create_note(&self, note: Note) -> Result<(), String> {
         let links_json =
             serde_json::to_string(&note.links).map_err(|e| e.to_string())?;
 
@@ -94,8 +94,7 @@ impl<'a> NotesRepository for SqliteNotesRepository<'a> {
         Ok(())
     }
 
-
-       fn update_note(&self, note: Note) -> Result<(), String> {
+    fn update_note(&self, note: Note) -> Result<(), String> {
         let links_json =
             serde_json::to_string(&note.links).map_err(|e| e.to_string())?;
 
@@ -126,5 +125,16 @@ impl<'a> NotesRepository for SqliteNotesRepository<'a> {
 
         Ok(())
     }
+
+  fn delete_note(&self, note_id: String) -> Result<(), String> {
+    self.conn
+        .execute(
+            "DELETE FROM notes WHERE id = ?1",
+            rusqlite::params![note_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+    }   
 
 }

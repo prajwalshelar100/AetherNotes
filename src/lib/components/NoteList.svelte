@@ -24,13 +24,16 @@
   {#if filteredNotes.length === 0}
     <div class="empty">No notes found.</div>
   {:else}
-    <ul>
+    <ul class="note-list">
       {#each filteredNotes as note}
         <li
           class:selected={$selectedNoteId === note.id}
           on:click={() => select(note.id)}
         >
-          <div class="note-title">{note.title || "Untitled"}</div>
+          <div class="note-title">
+            {note.title || "Untitled"}
+          </div>
+
           <div class="note-meta">
             <span class="date">{formatDate(note.updated_at)}</span>
             <span class="preview">
@@ -45,9 +48,11 @@
 
 <style>
   .list-container {
-    flex: 1;
+    height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: var(--spacing-sm);
+    scroll-behavior: smooth;
   }
 
   .empty {
@@ -57,7 +62,7 @@
     font-size: 13px;
   }
 
-  ul {
+  .note-list {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -94,6 +99,7 @@
     justify-content: space-between;
     font-size: 11px;
     color: var(--text-muted);
+    gap: 8px;
   }
 
   .preview {
@@ -101,5 +107,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 60%;
   }
 </style>

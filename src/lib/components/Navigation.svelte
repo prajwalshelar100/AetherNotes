@@ -2,9 +2,9 @@
   import { page } from "$app/stores";
   import {
     isSidebarOpen,
-    allNotes,
     selectedNoteId,
-    createEmptyNote
+    createEmptyNote,
+    deleteNote
   } from "$lib/store";
   import NoteList from "$lib/components/NoteList.svelte";
 
@@ -42,11 +42,10 @@
     isSidebarOpen.update(v => !v);
   }
 
-  // ✅ Create + persist note correctly
+  // ✅ Create + persist note
   async function create() {
     const note = await createEmptyNote();
 
-    // Context-specific defaults
     if (currentPath.startsWith("/daily")) {
       note.title = new Date().toDateString();
       note.status = "active";
@@ -58,8 +57,21 @@
     } else {
       note.status = "inbox";
     }
+  }
 
-    // Local store already updated in createEmptyNote
+  // ✅ Delete selected note (header-only)
+  async function removeSelected() {
+    if (!$selectedNoteId) return;
+
+    const confirmed = confirm("Delete this note?");
+    if (!confirmed) return;
+
+    try {
+      await deleteNote($selectedNoteId);
+      selectedNoteId.set(null);
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    }
   }
 
   // Filter logic per context
@@ -113,7 +125,19 @@
 
       {#if $isSidebarOpen}
         <span class="context-title">{contextLabel}</span>
-        <button class="add-btn" on:click={create}>+</button>
+
+        <div class="header-actions">
+          <button class="add-btn" on:click={create} title="New note">+</button>
+
+          <button
+            class="delete-btn"
+            on:click={removeSelected}
+            disabled={!$selectedNoteId}
+            title="Delete note"
+          >
+            🗑️
+          </button>
+        </div>
       {/if}
     </header>
 
@@ -209,15 +233,27 @@
     text-align: center;
   }
 
+  .header-actions {
+    display: flex;
+    gap: 6px;
+  }
+
   .back-btn,
-  .add-btn {
+  .add-btn,
+  .delete-btn {
     width: 28px;
     height: 28px;
     border-radius: 4px;
   }
 
+  .delete-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
   .back-btn:hover,
-  .add-btn:hover {
+  .add-btn:hover,
+  .delete-btn:hover:not(:disabled) {
     background-color: var(--bg-panel);
   }
 

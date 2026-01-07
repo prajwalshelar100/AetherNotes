@@ -1,6 +1,12 @@
 import { writable, derived } from "svelte/store";
 import type { Note } from "./types";
-import { getNotes, createNote, saveNote } from "./api";
+
+import {
+  getNotes,
+  createNote,
+  saveNote,
+  deleteNote as deleteNoteApi,
+} from "./api";
 
 // Core data
 export const allNotes = writable<Note[]>([]);
@@ -40,17 +46,15 @@ export async function createEmptyNote(): Promise<Note> {
     updated_at: now,
   };
 
-  // Persist immediately
   await createNote(note);
 
-  // Update local store
   allNotes.update((notes) => [note, ...notes]);
   selectedNoteId.set(note.id);
 
   return note;
 }
 
-// Autosave helper (called from Editor)
+// Autosave helper
 export async function persistNote(note: Note) {
   note.updated_at = Date.now();
   await saveNote(note);
@@ -58,4 +62,15 @@ export async function persistNote(note: Note) {
   allNotes.update((notes) =>
     notes.map((n) => (n.id === note.id ? note : n))
   );
+}
+export async function deleteNote(id: string) {
+  try {
+    await deleteNoteApi(id);
+    allNotes.update((notes) => notes.filter((n) => n.id !== id));
+    selectedNoteId.update((current) => (current === id ? null : current));
+  } catch (error) {
+    console.error("Failed to delete note:", error);
+    alert(`Failed to delete note: ${error}`);
+    throw error;
+  }
 }
